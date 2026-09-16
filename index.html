@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pork & Garlic Ice Cream Co. — Year 2 Winter Decision Dashboard</title>
+  <title>Pork & Garlic Ice Cream Co. — Year 2 Winter Decision Tool</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
@@ -11,233 +11,359 @@
   </style>
 </head>
 <body class="min-h-screen text-slate-800">
-  <header class="bg-slate-900 text-white shadow-md py-6 px-8 mb-6">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+  <header class="bg-slate-900 text-white shadow-md py-5 px-8 mb-6">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
       <div>
-        <span class="text-xs font-bold uppercase tracking-widest text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800">Business Simulation · Team 3</span>
-        <h1 class="text-3xl font-black mt-2">Pork & Garlic Ice Cream Co.</h1>
-        <p class="text-slate-400 text-sm mt-1">Year 2 Winter Strategy Comparison & Advanced Financial Stress-Tester</p>
+        <span class="text-xs font-bold uppercase tracking-widest text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800">Team 3 · Simulation</span>
+        <h1 class="text-2xl font-black mt-1">Pork & Garlic Ice Cream Co.</h1>
       </div>
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 text-xs flex gap-6">
-        <div>
-          <span class="text-slate-400 block font-medium">Starting Cash (Y1 End)</span>
-          <span class="text-white font-bold text-base">Sh 74,940</span>
-        </div>
-        <div class="border-l border-slate-700 pl-4">
-          <span class="text-slate-400 block font-medium">Owned Machine</span>
-          <span class="text-emerald-400 font-bold text-base">Type 5 (45k cap)</span>
-        </div>
-        <div class="border-l border-slate-700 pl-4">
-          <span class="text-slate-400 block font-medium">Tax Loss Pool</span>
-          <span class="text-amber-400 font-bold text-base">Sh 560</span>
-        </div>
-      </div>
+      <button id="resetDemo" class="bg-slate-800 hover:bg-slate-700 text-xs font-semibold px-4 py-2 rounded-xl border border-slate-700 transition">Reset to demo</button>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-6 pb-12">
-    <!-- Global Stress Test Slider -->
-    <section class="bg-white rounded-3xl p-6 border shadow-sm mb-6">
+  <main class="max-w-7xl mx-auto px-6 pb-16">
+    <!-- Side by Side Strategy Columns -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="strategyColumns"></div>
+
+    <!-- Downside Test Section -->
+    <section class="mt-10 bg-white rounded-3xl p-6 border shadow-sm">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
         <div>
-          <h2 class="text-lg font-bold text-slate-900">Stress Test: What if sales are lower?</h2>
-          <p class="text-xs text-slate-500">Adjust the market allocation percentage to see how both strategies handle demand shortfalls.</p>
+          <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">STRESS TEST</span>
+          <h2 class="text-xl font-black text-slate-900">What if allocated sales are lower?</h2>
+          <p class="text-xs text-slate-500">Reduce both strategies' allocated sales; results update immediately.</p>
         </div>
-        <div class="flex items-center gap-3">
-          <span class="text-sm font-semibold text-slate-600">Sales allocation kept:</span>
-          <span id="allocVal" class="bg-slate-900 text-white font-bold px-4 py-1.5 rounded-xl text-sm">100%</span>
+        <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl" id="allocPills">
+          <button data-alloc="100" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm">100%</button>
+          <button data-alloc="80" class="px-4 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900">80%</button>
+          <button data-alloc="60" class="px-4 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900">60%</button>
         </div>
       </div>
-      <input id="globalAlloc" type="range" min="10" max="100" value="100" class="w-full h-2 bg-slate-200 rounded-lg cursor-pointer">
-    </section>
-
-    <!-- Side by Side Strategy Cards -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="strategyCards"></div>
-
-    <!-- Executive Summary & Recommendation Note -->
-    <section class="mt-8 bg-white rounded-3xl p-6 border shadow-sm">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">Decision Support</span>
-          <h2 class="text-xl font-black text-slate-900">AI Recommendation & Strategy Verdict</h2>
-        </div>
-        <button id="refreshRec" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-800 transition">Regenerate Verdict</button>
+      
+      <div class="overflow-x-auto mt-6">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b text-slate-400 font-semibold uppercase tracking-wider">
+              <th class="pb-3">Strategy</th>
+              <th class="pb-3">Net Profit</th>
+              <th class="pb-3">Closing Cash</th>
+              <th class="pb-3">Expected Sales</th>
+              <th class="pb-3">Unsold</th>
+              <th class="pb-3">Unused Milk</th>
+              <th class="pb-3">Rent</th>
+              <th class="pb-3">Machine Costs</th>
+              <th class="pb-3">Transport</th>
+              <th class="pb-3">Market</th>
+              <th class="pb-3">Interest</th>
+              <th class="pb-3">Warnings</th>
+            </tr>
+          </thead>
+          <tbody id="downsideTableBody" class="divide-y font-medium text-slate-700"></tbody>
+        </table>
       </div>
-      <textarea id="execNote" class="w-full h-28 p-4 text-sm bg-slate-50 border rounded-2xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900"></textarea>
     </section>
   </main>
 
   <script>
-    const CONSTS = { startCash: 74940, lossPool: 560, machineCap: 45000, maint: 1300, depr: 3500, fixedSalaries: 10000 };
+    const CONSTS = { startCash: 74940, lossPool: 560, fixedSalaries: 10000, existingCap: 45000, existingMaint: 1300, existingDepr: 3500 };
     
-    const defaults = {
+    const premises = {
+      'None': { slots: 0, rent: 0, transport: 0 },
+      'Premise A': { slots: 1, rent: 12000, transport: 0.3 },
+      'Premise B': { slots: 1, rent: 10000, transport: 0.4 },
+      'Premise C': { slots: 1, rent: 12000, transport: 0.3 },
+      'Premise D': { slots: 1, rent: 17000, transport: 0.1 },
+      'Premise E': { slots: 2, rent: 15000, transport: 0.2 },
+      'Premise F': { slots: 3, rent: 16000, transport: 0.2 }
+    };
+
+    const machines = {
+      'None': { cap: 0, price: 0, maint: 0, depr: 0 },
+      'Type 1': { cap: 72000, price: 35000, maint: 1800, depr: 4375 },
+      'Type 2': { cap: 120000, price: 95000, maint: 2900, depr: 11875 },
+      'Type 3': { cap: 68000, price: 38000, maint: 2100, depr: 4750 },
+      'Type 4': { cap: 95000, price: 70000, maint: 2900, depr: 8750 },
+      'Type 5': { cap: 45000, price: 28000, maint: 1300, depr: 3500 },
+      'Type 6': { cap: 110000, price: 90000, maint: 2900, depr: 11250 }
+    };
+
+    let activeAlloc = 100;
+
+    const strategies = {
       a: {
-        title: "Strategy A — Cautious / Cash-Protective",
-        badge: "Cash Positive",
-        milkTons: 1.5,
+        title: "Option A — Cautious / Balanced",
+        premise: "Premise E",
+        machine: "Type 2",
+        machineQty: 1,
+        milkTons: 5,
         milkPrice: 20000,
-        salesReq: 30000,
+        salesReq: 100000,
         sellingPrice: 2,
         marketInv: 3000,
-        premiseRent: 17000,
-        transportMax: 3000,
-        loan: 0,
-        interestRate: 10
+        loan: 50000,
+        interestRate: 10,
+        principalRepay: 10000,
+        notes: "Balanced scale with Premise E and Type 2 machine."
       },
       b: {
-        title: "Strategy B — Growth / High-Sales Push",
-        badge: "Aggressive",
-        milkTons: 2,
+        title: "Option B — Growth / Heavy Push",
+        premise: "Premise D",
+        machine: "Type 4",
+        machineQty: 1,
+        milkTons: 5,
         milkPrice: 20000,
-        salesReq: 45000,
+        salesReq: 85000,
         sellingPrice: 2,
-        marketInv: 12000,
-        premiseRent: 17000,
-        transportMax: 5000,
-        loan: 20000,
-        interestRate: 10
+        marketInv: 3000,
+        loan: 50000,
+        interestRate: 10,
+        principalRepay: 10000,
+        notes: "High efficiency push with Premise D and Type 4 machine."
       }
     };
 
     const sh = n => 'Sh ' + Math.round(n).toLocaleString();
 
-    function renderCards() {
-      const container = document.getElementById('strategyCards');
-      container.innerHTML = Object.entries(defaults).map(([key, d]) => `
-        <div class="bg-white rounded-3xl border shadow-sm p-6 flex flex-col justify-between" data-key="${key}">
-          <div>
-            <div class="flex justify-between items-center mb-4 pb-4 border-b">
-              <div>
-                <span class="text-xs font-bold uppercase tracking-widest ${key === 'a' ? 'text-emerald-600' : 'text-violet-600'}">Year 2 Winter Scenario</span>
-                <h3 class="text-xl font-black text-slate-900 mt-0.5">${d.title}</h3>
-              </div>
-              <span id="badge-${key}" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${d.badge}</span>
+    function renderUI() {
+      const container = document.getElementById('strategyColumns');
+      container.innerHTML = Object.entries(strategies).map(([key, s]) => `
+        <div class="bg-white rounded-3xl border shadow-sm p-6" data-strat="${key}">
+          <div class="flex justify-between items-center mb-6 pb-4 border-b">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-widest ${key === 'a' ? 'text-emerald-600' : 'text-violet-600'}">YEAR 2 WINTER SCENARIO</span>
+              <h2 class="text-xl font-black text-slate-900 mt-0.5">${s.title}</h2>
             </div>
-
-            <!-- Inputs Grid -->
-            <div class="grid grid-cols-2 gap-4 text-sm mb-6">
-              ${inputField('Milk Purchase (tons)', key, 'milkTons', d.milkTons, 0.1)}
-              ${inputField('Milk Price (Sh/ton)', key, 'milkPrice', d.milkPrice, 1000)}
-              ${inputField('Sales Request (units)', key, 'salesReq', d.salesReq, 1000)}
-              ${inputField('Selling Price (Sh/unit)', key, 'sellingPrice', d.sellingPrice, 0.1)}
-              ${inputField('Market Investment (Sh)', key, 'marketInv', d.marketInv, 500)}
-              ${inputField('Premise Rent (Sh)', key, 'premiseRent', d.premiseRent, 500)}
-              ${inputField('Max Transport (Sh)', key, 'transportMax', d.transportMax, 500)}
-              ${inputField('New Bank Loan (Sh)', key, 'loan', d.loan, 1000)}
-            </div>
-
-            <!-- Advance Warning Box -->
-            <div id="warn-${key}" class="p-3 rounded-2xl text-xs font-semibold mb-6"></div>
-
-            <!-- Financial Output Breakdown -->
-            <div class="bg-slate-50 rounded-2xl p-4 border grid grid-cols-2 gap-3 text-xs" id="out-${key}"></div>
+            <span id="badge-${key}" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">Cash Positive</span>
           </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border text-center">
+            <div><span class="text-[11px] text-slate-400 block font-semibold uppercase">Net Profit</span><span id="np-${key}" class="font-black text-slate-900 text-sm">-</span></div>
+            <div class="border-x"><span class="text-[11px] text-slate-400 block font-semibold uppercase">Closing Cash</span><span id="cc-${key}" class="font-black text-emerald-700 text-sm">-</span></div>
+            <div><span class="text-[11px] text-slate-400 block font-semibold uppercase">Feasible Sales</span><span id="fs-${key}" class="font-black text-slate-900 text-sm">-</span></div>
+          </div>
+
+          <div class="mb-6 space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Production & Premises</h3>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Premise</label>
+                <select data-field="premise" class="w-full bg-slate-50 border rounded-xl px-2 py-2 text-xs font-semibold text-slate-900">
+                  ${Object.keys(premises).map(p => `<option ${p === s.premise ? 'selected' : ''}>${p}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">New Machine</label>
+                <select data-field="machine" class="w-full bg-slate-50 border rounded-xl px-2 py-2 text-xs font-semibold text-slate-900">
+                  ${Object.keys(machines).map(m => `<option ${m === s.machine ? 'selected' : ''}>${m}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Qty</label>
+                <input type="number" min="0" max="3" value="${s.machineQty}" data-field="machineQty" class="w-full bg-slate-50 border rounded-xl px-2 py-2 text-xs font-semibold text-slate-900">
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 text-xs mb-6">
+            <div>
+              <label class="block font-semibold text-slate-500 mb-1">Milk Purchase (tons)</label>
+              <input type="number" step="0.5" value="${s.milkTons}" data-field="milkTons" class="w-full bg-slate-50 border rounded-xl px-3 py-2 font-semibold">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-500 mb-1">Sales Request (units)</label>
+              <input type="number" step="1000" value="${s.salesReq}" data-field="salesReq" class="w-full bg-slate-50 border rounded-xl px-3 py-2 font-semibold">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-500 mb-1">Market Investment (Sh)</label>
+              <input type="number" step="500" value="${s.marketInv}" data-field="marketInv" class="w-full bg-slate-50 border rounded-xl px-3 py-2 font-semibold">
+            </div>
+            <div>
+              <label class="block font-semibold text-slate-500 mb-1">Selling Price (Sh/unit)</label>
+              <input type="number" step="0.1" value="${s.sellingPrice}" data-field="sellingPrice" class="w-full bg-slate-50 border rounded-xl px-3 py-2 font-semibold">
+            </div>
+          </div>
+
+          <div class="mb-6 bg-slate-50 p-3 rounded-2xl border flex justify-between items-center text-xs">
+            <div>
+              <span class="font-bold text-slate-900 block">Existing Machine: Autumn Type 5</span>
+              <span class="text-slate-500 text-[11px]">45,000 capacity · Maint Sh 1,300 · Depr Sh 3,500</span>
+            </div>
+            <span class="text-xs font-semibold px-2 py-1 bg-white border rounded-xl text-slate-600">Active</span>
+          </div>
+
+          <div class="mb-6 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Borrowing & Finance</h3>
+            <div class="grid grid-cols-3 gap-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-500 mb-1">New Loan (Sh)</label>
+                <input type="number" step="5000" value="${s.loan}" data-field="loan" class="w-full bg-slate-50 border rounded-xl px-2 py-2 font-semibold">
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-500 mb-1">Interest Rate %</label>
+                <input type="number" value="${s.interestRate}" data-field="interestRate" class="w-full bg-slate-50 border rounded-xl px-2 py-2 font-semibold">
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-500 mb-1">Principal Repay</label>
+                <input type="number" step="1000" value="${s.principalRepay}" data-field="principalRepay" class="w-full bg-slate-50 border rounded-xl px-2 py-2 font-semibold">
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <label class="block text-xs font-semibold text-slate-500 mb-1">Strategy Notes</label>
+            <input type="text" value="${s.notes}" data-field="notes" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-xs text-slate-700 font-medium">
+          </div>
+
+          <div id="warn-${key}" class="p-3 rounded-2xl text-xs font-semibold"></div>
         </div>
       `).join('');
       attachListeners();
-      computeAll();
+      computeEverything();
     }
 
-    function inputField(label, key, field, val, step) {
-      return `
-        <div>
-          <label class="block text-slate-500 font-medium mb-1">${label}</label>
-          <input type="number" step="${step}" value="${val}" data-strat="${key}" data-field="${field}" 
-            class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-slate-900 font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900">
-        </div>
-      `;
-    }
+    function getStratData(key) {
+      const card = document.querySelector(`[data-strat="${key}"]`);
+      const getVal = f => card.querySelector(`[data-field="${f}"]`).value;
+      const getNum = f => parseFloat(getVal(f)) || 0;
 
-    function computeStrategy(key) {
-      const card = document.querySelector(`[data-key="${key}"]`);
-      const getVal = field => parseFloat(card.querySelector(`[data-field="${field}"]`).value) || 0;
+      const premiseName = getVal('premise');
+      const machineName = getVal('machine');
+      const machineQty = getNum('machineQty');
+      const milkTons = getNum('milkTons');
+      const salesReq = getNum('salesReq');
+      const marketInv = getNum('marketInv');
+      const sellingPrice = getNum('sellingPrice');
+      const loan = getNum('loan');
+      const interestRate = getNum('interestRate');
+      const principalRepay = getNum('principalRepay');
 
-      const milkTons = getVal('milkTons');
-      const milkPrice = getVal('milkPrice');
-      const salesReq = getVal('salesReq');
-      const sellingPrice = getVal('sellingPrice');
-      const marketInv = getVal('marketInv');
-      const premiseRent = getVal('premiseRent');
-      const transportMax = getVal('transportMax');
-      const loan = getVal('loan');
-      const interestRate = getVal('interestRate');
+      const premise = premises[premiseName];
+      const newMachine = machines[machineName];
 
-      const allocPct = parseFloat(document.getElementById('globalAlloc').value) / 100;
-      document.getElementById('allocVal').textContent = Math.round(allocPct * 100) + '%';
-      
-      const actualSales = Math.min(salesReq, CONSTS.machineCap) * allocPct;
+      const milkCost = milkTons * 20000;
+      const totalCapacity = CONSTS.existingCap + (newMachine.cap * machineQty);
+      const totalMilkYield = milkTons * 20000;
+      const feasibleProd = Math.min(totalCapacity, totalMilkYield);
+
+      const expectedAlloc = salesReq * (activeAlloc / 100);
+      const actualSales = Math.min(expectedAlloc, feasibleProd);
+      const unsold = Math.max(0, feasibleProd - actualSales);
+      const unusedMilk = Math.max(0, totalMilkYield - feasibleProd);
+
       const revenue = actualSales * sellingPrice;
-      const milkCost = milkTons * milkPrice;
-      
-      const actualTransport = transportMax * (actualSales / (salesReq || 1));
-      const interest = loan * 0.10;
+      const totalMaint = CONSTS.existingMaint + (newMachine.maint * machineQty);
+      const totalDepr = CONSTS.existingDepr + (newMachine.depr * machineQty);
 
-      const grossProfit = revenue - milkCost - CONSTS.maint - CONSTS.depr;
+      const grossProfit = revenue - milkCost - totalMaint - totalDepr;
       const bonus = grossProfit > 0 ? grossProfit * 0.05 : 0;
-      
-      const profitBeforeTax = grossProfit - actualTransport - marketInv - bonus - CONSTS.fixedSalaries - premiseRent - interest;
+
+      const transport = actualSales * premise.transport;
+      const interest = loan * (interestRate / 100);
+
+      const profitBeforeTax = grossProfit - transport - marketInv - bonus - CONSTS.fixedSalaries - premise.rent - interest;
       const taxableProfit = profitBeforeTax > 0 ? Math.max(0, profitBeforeTax - CONSTS.lossPool) : 0;
       const tax = taxableProfit * 0.10;
+      const netProfit = profitBeforeTax - tax;
 
-      const advanceCash = CONSTS.startCash + loan - milkCost - marketInv;
-      const closingCash = CONSTS.startCash + loan + revenue - milkCost - marketInv - premiseRent - CONSTS.maint - actualTransport - CONSTS.fixedSalaries - bonus - tax;
-
-      return { actualSales, revenue, milkCost, grossProfit, bonus, interest, profitBeforeTax, tax, closingCash, advanceCash, capped: salesReq > CONSTS.machineCap };
-    }
-
-    function computeAll() {
-      const resA = computeStrategy('a');
-      const resB = computeStrategy('b');
-
-      updateCardUI('a', resA);
-      updateCardUI('b', resB);
-      updateRecommendation(resA, resB);
-    }
-
-    function updateCardUI(key, r) {
-      const card = document.querySelector(`[data-key="${key}"]`);
+      const machinePurchases = newMachine.price * machineQty;
+      const advanceCash = CONSTS.startCash + loan - milkCost - marketInv - machinePurchases;
       
-      const warnBox = card.querySelector(`#warn-${key}`);
-      if (r.advanceCash < 0) {
-        warnBox.className = "p-3 rounded-2xl text-xs font-semibold mb-6 bg-red-50 text-red-700 border border-red-200";
-        warnBox.textContent = `⚠️ Advance cash warning: Short by ${sh(-r.advanceCash)} after milk, loan, and market investments!`;
+      const closingCash = CONSTS.startCash + loan + revenue - machinePurchases - milkCost - marketInv - premise.rent - totalMaint - transport - CONSTS.fixedSalaries - bonus - principalRepay - interest - tax;
+
+      return {
+        key, netProfit, closingCash, feasibleSales: feasibleProd, expectedAlloc, actualSales, unsold, unusedMilk,
+        rent: premise.rent, machineCosts: totalMaint + totalDepr, transport, market: marketInv, interest,
+        advanceCash, machinePurchases, milkCost
+      };
+    }
+
+    function computeEverything() {
+      const rA = getStratData('a');
+      const rB = getStratData('b');
+
+      updateCardSummary('a', rA);
+      updateCardSummary('b', rB);
+      updateDownsideTable(rA, rB);
+    }
+
+    function updateCardSummary(key, r) {
+      document.getElementById(`np-${key}`).textContent = sh(r.netProfit);
+      document.getElementById(`cc-${key}`).textContent = sh(r.closingCash);
+      document.getElementById(`fs-${key}`).textContent = Math.round(r.feasibleSales).toLocaleString();
+
+      const badge = document.getElementById(`badge-${key}`);
+      if (r.closingCash < 0) {
+        badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-red-50 text-red-700 border border-red-200";
+        badge.textContent = "Cash Negative ⚠️";
       } else {
-        warnBox.className = "p-3 rounded-2xl text-xs font-semibold mb-6 bg-emerald-50 text-emerald-700 border border-emerald-200";
-        warnBox.textContent = `✅ Advance cash check passes: ${sh(r.advanceCash)} remaining safely.`;
+        badge.className = "text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200";
+        badge.textContent = "Cash Positive";
       }
 
-      const outBox = card.querySelector(`#out-${key}`);
-      outBox.innerHTML = `
-        <div><span class="text-slate-400 block">Actual Sales</span><span class="font-bold text-slate-900">${Math.round(r.actualSales).toLocaleString()} units</span></div>
-        <div><span class="text-slate-400 block">Revenue</span><span class="font-bold text-slate-900">${sh(r.revenue)}</span></div>
-        <div><span class="text-slate-400 block">Gross Profit</span><span class="font-bold ${r.grossProfit < 0 ? 'text-red-600' : 'text-slate-900'}">${sh(r.grossProfit)}</span></div>
-        <div><span class="text-slate-400 block">Profit Before Tax</span><span class="font-bold ${r.profitBeforeTax < 0 ? 'text-red-600' : 'text-slate-900'}">${sh(r.profitBeforeTax)}</span></div>
-        <div><span class="text-slate-400 block">Bonus & Game Tax</span><span class="font-bold text-slate-900">${sh(r.bonus)} · ${sh(r.tax)}</span></div>
-        <div class="col-span-2 pt-2 border-t mt-1 flex justify-between items-center bg-white p-2 rounded-xl">
-          <span class="font-bold text-slate-600">Closing Cash</span>
-          <span class="text-base font-black ${r.closingCash < 0 ? 'text-red-600' : 'text-emerald-700'}">${sh(r.closingCash)}</span>
-        </div>
-        ${r.capped ? '<div class="col-span-2 text-amber-600 font-medium text-[11px]">⚠️ Capped at 45,000 unit machine limit.</div>' : ''}
-      `;
+      const warnBox = document.getElementById(`warn-${key}`);
+      if (r.advanceCash < 0) {
+        warnBox.className = "p-3 rounded-2xl text-xs font-semibold bg-red-50 text-red-700 border border-red-200";
+        warnBox.textContent = `⚠️ Advance cash warning: Short by ${sh(-r.advanceCash)} before market demand is realized. Take a larger loan or reduce advance spending.`;
+      } else {
+        warnBox.className = "p-3 rounded-2xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+        warnBox.textContent = `✅ Advance cash check passes: ${sh(r.advanceCash)} remaining safely after advance payments.`;
+      }
     }
 
-    function updateRecommendation(a, b) {
-      const winner = a.closingCash >= b.closingCash ? 'Strategy A (Cautious)' : 'Strategy B (Growth)';
-      const diff = Math.abs(a.closingCash - b.closingCash);
-      const alloc = document.getElementById('globalAlloc').value;
-      
-      document.getElementById('execNote').value = `At ${alloc}% market allocation, ${winner} yields the stronger liquidity position, closing Winter with ${sh(Math.max(a.closingCash, b.closingCash))} (a difference of ${sh(diff)} over the alternative option). Ensure advance cash checks remain positive before locking in trainer requests.`;
+    function updateDownsideTable(rA, rB) {
+      const tbody = document.getElementById('downsideTableBody');
+      tbody.innerHTML = `
+        <tr>
+          <td class="py-3 font-bold text-slate-900">Option A</td>
+          <td class="py-3">${sh(rA.netProfit)}</td>
+          <td class="py-3 font-bold text-emerald-700">${sh(rA.closingCash)}</td>
+          <td class="py-3">${Math.round(rA.expectedAlloc).toLocaleString()}</td>
+          <td class="py-3">${Math.round(rA.unsold).toLocaleString()}</td>
+          <td class="py-3">${rA.unusedMilk.toLocaleString()}</td>
+          <td class="py-3">${sh(rA.rent)}</td>
+          <td class="py-3">${sh(rA.machineCosts)}</td>
+          <td class="py-3">${sh(rA.transport)}</td>
+          <td class="py-3">${sh(rA.market)}</td>
+          <td class="py-3">${sh(rA.interest)}</td>
+          <td class="py-3"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">1</span></td>
+        </tr>
+        <tr>
+          <td class="py-3 font-bold text-slate-900">Option B</td>
+          <td class="py-3">${sh(rB.netProfit)}</td>
+          <td class="py-3 font-bold text-emerald-700">${sh(rB.closingCash)}</td>
+          <td class="py-3">${Math.round(rB.expectedAlloc).toLocaleString()}</td>
+          <td class="py-3">${Math.round(rB.unsold).toLocaleString()}</td>
+          <td class="py-3">${rB.unusedMilk.toLocaleString()}</td>
+          <td class="py-3">${sh(rB.rent)}</td>
+          <td class="py-3">${sh(rB.machineCosts)}</td>
+          <td class="py-3">${sh(rB.transport)}</td>
+          <td class="py-3">${sh(rB.market)}</td>
+          <td class="py-3">${sh(rB.interest)}</td>
+          <td class="py-3"><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">1</span></td>
+        </tr>
+      `;
     }
 
     function attachListeners() {
-      document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('input', computeAll);
+      document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', computeEverything);
+        el.addEventListener('change', computeEverything);
       });
-      document.getElementById('globalAlloc').addEventListener('input', computeAll);
+
+      document.querySelectorAll('#allocPills button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('#allocPills button').forEach(b => {
+            b.className = "px-4 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900";
+          });
+          e.target.className = "px-4 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white shadow-sm";
+          activeAlloc = parseInt(e.target.getAttribute('data-alloc'));
+          computeEverything();
+        });
+      });
     }
 
-    document.getElementById('refreshRec').addEventListener('click', computeAll);
-    renderCards();
+    document.getElementById('resetDemo').addEventListener('click', renderUI);
+    renderUI();
   </script>
 </body>
 </html>
