@@ -1,38 +1,243 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Winter Decision Tool</title><script src="https://cdn.tailwindcss.com"></script><style>body{background:#fffaf0}input[type=range]{accent-color:#14213d}</style></head>
-<body class="min-h-screen text-slate-800"><main class="mx-auto max-w-7xl p-5 sm:p-8">
-<header class="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end"><div><p class="text-xs font-bold uppercase tracking-[.2em] text-emerald-700">Business simulation · Year 2 Winter</p><h1 class="mt-1 text-3xl font-black text-slate-900 sm:text-4xl">Pork &amp; Garlic Ice Cream Co.</h1><p class="mt-2 text-slate-600">Stress-test two winter strategies against the same demand outcome.</p></div>
-<div class="flex gap-4">
-<div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm"><b>Year 1 ending state</b><br>Cash Sh 74,940 · Type 5 machine · Loss pool Sh 560</div>
-<div class="rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-sm"><b>Year 1 reference</b><br>Annual Net Profit: Sh -560</div>
-</div></header>
-<section class="mb-6 rounded-3xl bg-slate-900 p-6 text-white shadow-lg"><div class="flex items-center justify-between gap-3"><div><p class="text-sm font-bold uppercase tracking-widest text-amber-300">Actual sales allocation</p><p class="text-sm text-slate-300">Demand realised across both strategies</p></div><output id="allocOut" class="rounded-full bg-white/10 px-5 py-2 text-2xl font-black text-amber-300">100%</output></div><input id="alloc" class="mt-5 w-full" type="range" min="0" max="100" value="100"><div class="mt-1 flex justify-between text-xs text-slate-400"><span>0% demand</span><span>Full requested demand</span></div></section>
-<section class="mb-6 grid gap-3 sm:grid-cols-3"><div class="rounded-2xl border bg-white p-4 shadow-sm"><b>Type 5 machine</b><p class="text-sm text-slate-500">45,000 capacity · Maint Sh 1,300 · Depr Sh 3,500</p></div><div class="rounded-2xl border border-dashed border-amber-400 bg-amber-50 p-4 shadow-sm"><b>Year 2 Estimates (Editable)</b><p class="text-sm text-slate-500">Milk <input type="number" id="estMilk" value="20000" class="w-16 p-1 border rounded"> /ton · Price <input type="number" id="estPrice" value="2" class="w-12 p-1 border rounded"> /unit</p></div><div class="rounded-2xl border bg-white p-4 shadow-sm"><b>Tax & Salaries</b><p class="text-sm text-slate-500">5% positive GP bonus · 10% game tax · Salaries Sh 10,000</p></div></section>
-<section class="grid gap-6 lg:grid-cols-2" id="cards"></section>
-<section class="mt-6 rounded-3xl border bg-white p-6 shadow-md"><div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div><p class="text-xs font-bold uppercase tracking-widest text-emerald-700">Decision note</p><h2 class="text-xl font-black">Final recommendation</h2></div><button id="suggest" class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-bold text-white">Refresh suggestion</button></div><textarea id="note" class="mt-4 min-h-28 w-full rounded-2xl border p-4 text-sm leading-6"></textarea></section>
-</main>
-<script>
-const C={cash:74940,loss:560,cap:45000,maint:1300,depr:3500,salary:10000};
-const defaults={a:{name:'Strategy A',tag:'Steady winter plan',milk:1.5,rent:6000,market:5000,sales:30000,transport:3000,loan:0},b:{name:'Strategy B',tag:'Growth winter plan',milk:2,rent:8000,market:12000,sales:45000,transport:5000,loan:0}};let results={};
-const sh=n=>'Sh '+Math.round(n).toLocaleString();
-function card(k,d){return `<article class="rounded-3xl border bg-white p-5 shadow-md" data-k="${k}"><div class="mb-5 flex justify-between"><div><p class="text-xs font-bold uppercase tracking-widest ${k==='a'?'text-emerald-700':'text-violet-700'}">${d.name}</p><h2 class="text-xl font-black">${d.tag}</h2></div><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold">Compare</span></div><div class="grid gap-4 sm:grid-cols-2">${field('Milk (tons)','milk',d.milk,.1)}${field('Premise rent (Sh)','rent',d.rent,100)}${field('Market investment (Sh)','market',d.market,100)}${field('Requested sales (units)','sales',d.sales,100)}<label class="text-sm font-semibold">Max Transport (Sh)<input data-f="transport" class="mt-1 w-full rounded-xl border-slate-300" type="number" min="0" step="100" value="${d.transport}"></label><label class="text-sm font-semibold text-indigo-700">New Loan Taken (Sh)<input data-f="loan" class="mt-1 w-full rounded-xl border-indigo-300 bg-indigo-50" type="number" min="0" step="1000" value="${d.loan}"></label></div><div data-warn class="mt-5 rounded-xl p-3 text-sm font-semibold"></div><div data-out class="mt-5"></div></article>`}
-function field(label,key,value,step){return `<label class="text-sm font-semibold">${label}<input data-f="${key}" class="mt-1 w-full rounded-xl border-slate-300" type="number" min="0" step="${step}" value="${value}"></label>`}
-document.querySelector('#cards').innerHTML=Object.entries(defaults).map(([k,d])=>card(k,d)).join('');
-const allocationEl=document.querySelector('#alloc'), allocationOutput=document.querySelector('#allocOut'), noteEl=document.querySelector('#note');
-const estMilkEl=document.querySelector('#estMilk'), estPriceEl=document.querySelector('#estPrice');
-function calc(el){let v=f=>Math.max(0,+el.querySelector(`[data-f="${f}"]`).value||0);
-let milkPrice=+estMilkEl.value, unitPrice=+estPriceEl.value;
-let requested=v('sales'), actual=Math.min(requested,C.cap)*(+allocationEl.value/100), revenue=actual*unitPrice;
-let milk=v('milk')*milkPrice, market=v('market'), loan=v('loan');
-let actualTransport=v('transport')*(actual/requested||0);
-let interest=loan*0.10;
-let gp=revenue-milk-C.maint-C.depr, bonus=gp>0?gp*.05:0;
-let pbt=gp-actualTransport-market-bonus-C.salary-v('rent')-interest;
-let tax=Math.max(0,pbt-C.loss)*.1;
-let closing=C.cash+loan+revenue-milk-market-v('rent')-C.maint-actualTransport-C.salary-bonus-tax;
-return{advance:C.cash+loan-milk-market,actual,revenue,gp,bonus,interest,pbt,tax,closing,capped:requested>C.cap}}
-function update(){allocationOutput.textContent=allocationEl.value+'%';document.querySelectorAll('[data-k]').forEach(el=>{let r=calc(el);results[el.dataset.k]=r;let w=el.querySelector('[data-warn]');w.className='mt-5 rounded-xl p-3 text-sm font-semibold '+(r.advance<0?'bg-red-50 text-red-700':'bg-emerald-50 text-emerald-700');w.textContent=r.advance<0?`Advance cash warning: ${sh(-r.advance)} short.`:`Advance cash check passes: ${sh(r.advance)} remaining.`;el.querySelector('[data-out]').innerHTML=`<div class="grid grid-cols-2 gap-3 border-t pt-5 text-sm">${tile('Actual sales',Math.round(r.actual).toLocaleString()+' units')}${tile('Revenue',sh(r.revenue))}${tile('Gross profit',sh(r.gp),r.gp<0)}${tile('PBT (incl. interest)',sh(r.pbt),r.pbt<0)}${tile('Bonus · Tax',sh(r.bonus)+' · '+sh(r.tax))}${tile('Closing cash flow',sh(r.closing),r.closing<0,true)}${r.capped?'<p class="col-span-2 text-xs text-amber-700">Requested sales are capped at the 45k capacity.</p>':''}</div>`});recommend()}
-function tile(label,value,bad=false,final=false){return `<div class="rounded-xl p-3 ${final?(bad?'bg-red-50':'bg-emerald-50'):'bg-slate-50'}"><p class="text-xs text-slate-500">${label}</p><p class="mt-1 font-bold ${bad?'text-red-700':final?'text-emerald-700':'text-slate-900'}">${value}</p></div>`}
-function recommend(){let a=results.a,b=results.b,win=a.closing>=b.closing?'Strategy A':'Strategy B',r=win==='Strategy A'?a:b,d=Math.abs(a.closing-b.closing);noteEl.value=`Recommend ${win}: at ${allocationEl.value}% actual-sales allocation, it closes Winter with ${sh(r.closing)} cash, ${sh(d)} more than the alternative. `+(r.advance<0?'It fails the advance cash check, so take a loan or reduce spending.':r.pbt<0?'It is cash-feasible but loss-making before tax; revisit its fixed spending.':'It passes the advance cash check and retains the stronger liquidity position.')}
-document.querySelectorAll('input').forEach(x=>x.addEventListener('input',update));document.querySelector('#suggest').addEventListener('click',recommend);update();
-</script></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pork & Garlic Ice Cream Co. — Year 2 Winter Decision Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+    input[type=range] { accent-color: #0f172a; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800">
+  <header class="bg-slate-900 text-white shadow-md py-6 px-8 mb-6">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-widest text-emerald-400 bg-emerald-950 px-3 py-1 rounded-full border border-emerald-800">Business Simulation · Team 3</span>
+        <h1 class="text-3xl font-black mt-2">Pork & Garlic Ice Cream Co.</h1>
+        <p class="text-slate-400 text-sm mt-1">Year 2 Winter Strategy Comparison & Advanced Financial Stress-Tester</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 text-xs flex gap-6">
+        <div>
+          <span class="text-slate-400 block font-medium">Starting Cash (Y1 End)</span>
+          <span class="text-white font-bold text-base">Sh 74,940</span>
+        </div>
+        <div class="border-l border-slate-700 pl-4">
+          <span class="text-slate-400 block font-medium">Owned Machine</span>
+          <span class="text-emerald-400 font-bold text-base">Type 5 (45k cap)</span>
+        </div>
+        <div class="border-l border-slate-700 pl-4">
+          <span class="text-slate-400 block font-medium">Tax Loss Pool</span>
+          <span class="text-amber-400 font-bold text-base">Sh 560</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 pb-12">
+    <!-- Global Stress Test Slider -->
+    <section class="bg-white rounded-3xl p-6 border shadow-sm mb-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Stress Test: What if sales are lower?</h2>
+          <p class="text-xs text-slate-500">Adjust the market allocation percentage to see how both strategies handle demand shortfalls.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-semibold text-slate-600">Sales allocation kept:</span>
+          <span id="allocVal" class="bg-slate-900 text-white font-bold px-4 py-1.5 rounded-xl text-sm">100%</span>
+        </div>
+      </div>
+      <input id="globalAlloc" type="range" min="10" max="100" value="100" class="w-full h-2 bg-slate-200 rounded-lg cursor-pointer">
+    </section>
+
+    <!-- Side by Side Strategy Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8" id="strategyCards"></div>
+
+    <!-- Executive Summary & Recommendation Note -->
+    <section class="mt-8 bg-white rounded-3xl p-6 border shadow-sm">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-emerald-700">Decision Support</span>
+          <h2 class="text-xl font-black text-slate-900">AI Recommendation & Strategy Verdict</h2>
+        </div>
+        <button id="refreshRec" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-800 transition">Regenerate Verdict</button>
+      </div>
+      <textarea id="execNote" class="w-full h-28 p-4 text-sm bg-slate-50 border rounded-2xl text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900"></textarea>
+    </section>
+  </main>
+
+  <script>
+    const CONSTS = { startCash: 74940, lossPool: 560, machineCap: 45000, maint: 1300, depr: 3500, fixedSalaries: 10000 };
+    
+    const defaults = {
+      a: {
+        title: "Strategy A — Cautious / Cash-Protective",
+        badge: "Cash Positive",
+        milkTons: 1.5,
+        milkPrice: 20000,
+        salesReq: 30000,
+        sellingPrice: 2,
+        marketInv: 3000,
+        premiseRent: 17000,
+        transportMax: 3000,
+        loan: 0,
+        interestRate: 10
+      },
+      b: {
+        title: "Strategy B — Growth / High-Sales Push",
+        badge: "Aggressive",
+        milkTons: 2,
+        milkPrice: 20000,
+        salesReq: 45000,
+        sellingPrice: 2,
+        marketInv: 12000,
+        premiseRent: 17000,
+        transportMax: 5000,
+        loan: 20000,
+        interestRate: 10
+      }
+    };
+
+    const sh = n => 'Sh ' + Math.round(n).toLocaleString();
+
+    function renderCards() {
+      const container = document.getElementById('strategyCards');
+      container.innerHTML = Object.entries(defaults).map(([key, d]) => `
+        <div class="bg-white rounded-3xl border shadow-sm p-6 flex flex-col justify-between" data-key="${key}">
+          <div>
+            <div class="flex justify-between items-center mb-4 pb-4 border-b">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-widest ${key === 'a' ? 'text-emerald-600' : 'text-violet-600'}">Year 2 Winter Scenario</span>
+                <h3 class="text-xl font-black text-slate-900 mt-0.5">${d.title}</h3>
+              </div>
+              <span id="badge-${key}" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">${d.badge}</span>
+            </div>
+
+            <!-- Inputs Grid -->
+            <div class="grid grid-cols-2 gap-4 text-sm mb-6">
+              ${inputField('Milk Purchase (tons)', key, 'milkTons', d.milkTons, 0.1)}
+              ${inputField('Milk Price (Sh/ton)', key, 'milkPrice', d.milkPrice, 1000)}
+              ${inputField('Sales Request (units)', key, 'salesReq', d.salesReq, 1000)}
+              ${inputField('Selling Price (Sh/unit)', key, 'sellingPrice', d.sellingPrice, 0.1)}
+              ${inputField('Market Investment (Sh)', key, 'marketInv', d.marketInv, 500)}
+              ${inputField('Premise Rent (Sh)', key, 'premiseRent', d.premiseRent, 500)}
+              ${inputField('Max Transport (Sh)', key, 'transportMax', d.transportMax, 500)}
+              ${inputField('New Bank Loan (Sh)', key, 'loan', d.loan, 1000)}
+            </div>
+
+            <!-- Advance Warning Box -->
+            <div id="warn-${key}" class="p-3 rounded-2xl text-xs font-semibold mb-6"></div>
+
+            <!-- Financial Output Breakdown -->
+            <div class="bg-slate-50 rounded-2xl p-4 border grid grid-cols-2 gap-3 text-xs" id="out-${key}"></div>
+          </div>
+        </div>
+      `).join('');
+      attachListeners();
+      computeAll();
+    }
+
+    function inputField(label, key, field, val, step) {
+      return `
+        <div>
+          <label class="block text-slate-500 font-medium mb-1">${label}</label>
+          <input type="number" step="${step}" value="${val}" data-strat="${key}" data-field="${field}" 
+            class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-slate-900 font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900">
+        </div>
+      `;
+    }
+
+    function computeStrategy(key) {
+      const card = document.querySelector(`[data-key="${key}"]`);
+      const getVal = field => parseFloat(card.querySelector(`[data-field="${field}"]`).value) || 0;
+
+      const milkTons = getVal('milkTons');
+      const milkPrice = getVal('milkPrice');
+      const salesReq = getVal('salesReq');
+      const sellingPrice = getVal('sellingPrice');
+      const marketInv = getVal('marketInv');
+      const premiseRent = getVal('premiseRent');
+      const transportMax = getVal('transportMax');
+      const loan = getVal('loan');
+      const interestRate = getVal('interestRate');
+
+      const allocPct = parseFloat(document.getElementById('globalAlloc').value) / 100;
+      document.getElementById('allocVal').textContent = Math.round(allocPct * 100) + '%';
+      
+      const actualSales = Math.min(salesReq, CONSTS.machineCap) * allocPct;
+      const revenue = actualSales * sellingPrice;
+      const milkCost = milkTons * milkPrice;
+      
+      const actualTransport = transportMax * (actualSales / (salesReq || 1));
+      const interest = loan * 0.10;
+
+      const grossProfit = revenue - milkCost - CONSTS.maint - CONSTS.depr;
+      const bonus = grossProfit > 0 ? grossProfit * 0.05 : 0;
+      
+      const profitBeforeTax = grossProfit - actualTransport - marketInv - bonus - CONSTS.fixedSalaries - premiseRent - interest;
+      const taxableProfit = profitBeforeTax > 0 ? Math.max(0, profitBeforeTax - CONSTS.lossPool) : 0;
+      const tax = taxableProfit * 0.10;
+
+      const advanceCash = CONSTS.startCash + loan - milkCost - marketInv;
+      const closingCash = CONSTS.startCash + loan + revenue - milkCost - marketInv - premiseRent - CONSTS.maint - actualTransport - CONSTS.fixedSalaries - bonus - tax;
+
+      return { actualSales, revenue, milkCost, grossProfit, bonus, interest, profitBeforeTax, tax, closingCash, advanceCash, capped: salesReq > CONSTS.machineCap };
+    }
+
+    function computeAll() {
+      const resA = computeStrategy('a');
+      const resB = computeStrategy('b');
+
+      updateCardUI('a', resA);
+      updateCardUI('b', resB);
+      updateRecommendation(resA, resB);
+    }
+
+    function updateCardUI(key, r) {
+      const card = document.querySelector(`[data-key="${key}"]`);
+      
+      const warnBox = card.querySelector(`#warn-${key}`);
+      if (r.advanceCash < 0) {
+        warnBox.className = "p-3 rounded-2xl text-xs font-semibold mb-6 bg-red-50 text-red-700 border border-red-200";
+        warnBox.textContent = `⚠️ Advance cash warning: Short by ${sh(-r.advanceCash)} after milk, loan, and market investments!`;
+      } else {
+        warnBox.className = "p-3 rounded-2xl text-xs font-semibold mb-6 bg-emerald-50 text-emerald-700 border border-emerald-200";
+        warnBox.textContent = `✅ Advance cash check passes: ${sh(r.advanceCash)} remaining safely.`;
+      }
+
+      const outBox = card.querySelector(`#out-${key}`);
+      outBox.innerHTML = `
+        <div><span class="text-slate-400 block">Actual Sales</span><span class="font-bold text-slate-900">${Math.round(r.actualSales).toLocaleString()} units</span></div>
+        <div><span class="text-slate-400 block">Revenue</span><span class="font-bold text-slate-900">${sh(r.revenue)}</span></div>
+        <div><span class="text-slate-400 block">Gross Profit</span><span class="font-bold ${r.grossProfit < 0 ? 'text-red-600' : 'text-slate-900'}">${sh(r.grossProfit)}</span></div>
+        <div><span class="text-slate-400 block">Profit Before Tax</span><span class="font-bold ${r.profitBeforeTax < 0 ? 'text-red-600' : 'text-slate-900'}">${sh(r.profitBeforeTax)}</span></div>
+        <div><span class="text-slate-400 block">Bonus & Game Tax</span><span class="font-bold text-slate-900">${sh(r.bonus)} · ${sh(r.tax)}</span></div>
+        <div class="col-span-2 pt-2 border-t mt-1 flex justify-between items-center bg-white p-2 rounded-xl">
+          <span class="font-bold text-slate-600">Closing Cash</span>
+          <span class="text-base font-black ${r.closingCash < 0 ? 'text-red-600' : 'text-emerald-700'}">${sh(r.closingCash)}</span>
+        </div>
+        ${r.capped ? '<div class="col-span-2 text-amber-600 font-medium text-[11px]">⚠️ Capped at 45,000 unit machine limit.</div>' : ''}
+      `;
+    }
+
+    function updateRecommendation(a, b) {
+      const winner = a.closingCash >= b.closingCash ? 'Strategy A (Cautious)' : 'Strategy B (Growth)';
+      const diff = Math.abs(a.closingCash - b.closingCash);
+      const alloc = document.getElementById('globalAlloc').value;
+      
+      document.getElementById('execNote').value = `At ${alloc}% market allocation, ${winner} yields the stronger liquidity position, closing Winter with ${sh(Math.max(a.closingCash, b.closingCash))} (a difference of ${sh(diff)} over the alternative option). Ensure advance cash checks remain positive before locking in trainer requests.`;
+    }
+
+    function attachListeners() {
+      document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', computeAll);
+      });
+      document.getElementById('globalAlloc').addEventListener('input', computeAll);
+    }
+
+    document.getElementById('refreshRec').addEventListener('click', computeAll);
+    renderCards();
+  </script>
+</body>
+</html>
